@@ -13,7 +13,7 @@ class EnigmaEngine:
     def __init__(self, device=None):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = load_tokenizer()
-        vocab_size = getattr(self.tokenizer, "vocab_size", 5000)
+        vocab_size = getattr(self.tokenizer, "vocab_size", 10000)
         self.model = TinyEnigma(vocab_size=vocab_size, dim=CONFIG.get("embed_dim",128))
         if MODEL_PATH.exists():
             self.model.load_state_dict(torch.load(MODEL_PATH, map_location=self.device))
@@ -23,7 +23,12 @@ class EnigmaEngine:
     def generate(self, prompt: str, max_gen: int = 30, temperature: float = 1.0):
         # encode
         enc = self.tokenizer(prompt, return_tensors="pt")
-        input_ids = enc["input_ids"].to(self.device).long()
+        input_ids = enc["input_ids"]
+        if isinstance(input_ids, list):
+            input_ids = torch.tensor(input_ids, dtype=torch.long)
+            if input_ids.dim() == 1:
+                input_ids = input_ids.unsqueeze(0)
+        input_ids = input_ids.to(self.device).long()
         with torch.no_grad():
             for _ in range(max_gen):
                 logits = self.model(input_ids)

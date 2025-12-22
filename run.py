@@ -30,7 +30,12 @@ def main():
             print("Enigma:", resp)
 
     if args.gui:
-        from enigma.gui.main_window import run_app
+        # Use enhanced GUI with setup wizard
+        try:
+            from enigma.gui.enhanced_window import run_app
+        except ImportError:
+            # Fallback to original
+            from enigma.gui.main_window import run_app
         run_app()
         
 if __name__ == "__main__":
